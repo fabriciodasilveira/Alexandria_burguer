@@ -1,0 +1,79 @@
+services:
+  database:
+    image: postgres:13-alpine  # Mudei para versão 13 (mais estável)
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: restaurante_13mesas
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Mudei para volume nomeado
+      # Comentei o init.sql temporariamente para testar
+      # - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d restaurante_13mesas"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: backend_api
+    environment:
+      DATABASE_URL: postgresql://user:password@database:5432/restaurante_13mesas
+      MAX_TABLES: 13
+      TABLE_CAPACITY: 4
+    ports:
+      - "8000:8000"
+    depends_on:
+      - database
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend_web
+    ports:
+      - "8081:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n_orchestrator
+    ports:
+      - "5678:5678"
+    environment:
+      N8N_BASIC_AUTH_ACTIVE: false
+      N8N_HOST: n8n
+    restart: unless-stopped
+    
+  waha:
+    image: devlikeapro/waha
+    container_name: waha_whatsapp
+    platform: linux/amd64
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  llm:
+    image: ollama/ollama:latest
+    container_name: llm_processor
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  postgres_data:  # Adicionei o volume para PostgreSQL
+  ollama_data:
