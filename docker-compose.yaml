@@ -1,6 +1,6 @@
 services:
   database:
-    image: postgres:13-alpine  # Mudei para versão 13 (mais estável)
+    image: postgres:13-alpine
     container_name: postgres_db
     environment:
       POSTGRES_DB: restaurante_13mesas
@@ -8,9 +8,8 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
     volumes:
-      - postgres_data:/var/lib/postgresql/data  # Mudei para volume nomeado
-      # Comentei o init.sql temporariamente para testar
-      # - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     restart: unless-stopped
@@ -58,12 +57,33 @@ services:
     restart: unless-stopped
     
   waha:
-    image: devlikeapro/waha
-    container_name: waha_whatsapp
+    image: devlikeapro/waha:latest
     platform: linux/amd64
+    environment:
+      WHATSAPP_DEFAULT_ENGINE: NOWEB
+      WAHA_API_KEY: "123456"
+      WHATSAPP_HOOK_EVENTS: message
+      WAHA_NO_API_KEY: true
+      WAHA_DASHBOARD_NO_PASSWORD: true
+      WHATSAPP_SWAGGER_NO_PASSWORD: true
+      # Configurações críticas para timeout:
+      WHATSAPP_STARTUP_TIMEOUT: 60000
+      WHATSAPP_SESSION_TIMEOUT: 120
+      WHATSAPP_RECONNECT_INTERVAL: 30
+      # Configurações do Puppeteer:
+      PUPPETEER_LAUNCH_ARGS: "--no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-accelerated-2d-canvas --no-first-run --no-zygote --disable-gpu"
+      # Configurações adicionais:
+      WHATSAPP_WEBJS_QR_MAX_RETRIES: 5
+      WHATSAPP_WEBJS_RESTART_ON_TIMEOUT: "true"
+    volumes:
+      - waha_sessions:/app/.sessions
+      - waha_media:/app/.media
     ports:
       - "3000:3000"
     restart: unless-stopped
+    depends_on:
+      database:
+        condition: service_healthy
 
   llm:
     image: ollama/ollama:latest
@@ -74,6 +94,9 @@ services:
       - ollama_data:/root/.ollama
     restart: unless-stopped
 
+# VOLUMES DEVEM FICAR NO FINAL DO ARQUIVO (fora de services)
 volumes:
-  postgres_data:  # Adicionei o volume para PostgreSQL
+  postgres_data:
   ollama_data:
+  waha_sessions:
+  waha_media:
