@@ -15,10 +15,10 @@ VALUES
 (1, 4, 'Área Kids', 1), (2, 4, 'Área Kids', 2), 
 (3, 4, 'Área Kids', 3), (4, 4, 'Área Kids', 4),
 (5, 4, 'Área Kids', 5), (6, 4, 'Área Kids', 6),
-(7, 4, 'Normal', 7), (8, 4, 'Normal', 8),
-(9, 4, 'Jardim', 9), (10, 4, 'Jardim', 10),
-(11, 4, 'Jardim', 11), (12, 4, 'Jardim', 12),
-(13, 4, 'Jardim', 13)
+(7, 4, 'Central', 7), (8, 4, 'Central', 8),
+(9, 4, 'Central', 9), (10, 4, 'Central', 10),
+(11, 4, 'Central', 11), (12, 4, 'Central', 12),
+(13, 4, 'Central', 13)
 ON CONFLICT (id) DO NOTHING;
 
 -- Criação da Tabela Principal de Reservas
@@ -65,46 +65,46 @@ EXECUTE PROCEDURE update_updated_at_column();
 
 -- Inserindo algumas reservas de exemplo para teste
 -- Reserva 1: Ocupada (Mesa 2, 19:00 - 22:00)
-INSERT INTO reservations (reservation_code, customer_name, customer_phone, reservation_date, reservation_time, period, table_number, party_size, status, window_end, check_in_status, check_in_time) VALUES
-('R0001', 'João', '5511988887777', CURRENT_DATE, '19:00:00', 'Jantar', 2, 4, 'Check-in', '22:00:00', TRUE, CURRENT_TIMESTAMP);
+-- INSERT INTO reservations (reservation_code, customer_name, customer_phone, reservation_date, reservation_time, period, table_number, party_size, status, window_end, check_in_status, check_in_time) VALUES
+-- ('R0001', 'João', '5511988887777', CURRENT_DATE, '19:00:00', 'Jantar', 2, 4, 'Check-in', '22:00:00', TRUE, CURRENT_TIMESTAMP);
 
-UPDATE tables SET status = 'Ocupada', current_reservation_id = 1 WHERE id = 2;
+-- UPDATE tables SET status = 'Ocupada', current_reservation_id = 1 WHERE id = 2;
 
--- Reserva 2: Reservada (Mesa 3, 19:00 - 22:00, Limite 19:30)
-INSERT INTO reservations (reservation_code, customer_name, customer_phone, reservation_date, reservation_time, period, table_number, party_size, status, window_end, check_in_status) VALUES
-('R0002', 'Maria', '5511988886666', CURRENT_DATE, '19:00:00', 'Jantar', 3, 2, 'Confirmada', '22:00:00', FALSE);
+-- -- Reserva 2: Reservada (Mesa 3, 19:00 - 22:00, Limite 19:30)
+-- INSERT INTO reservations (reservation_code, customer_name, customer_phone, reservation_date, reservation_time, period, table_number, party_size, status, window_end, check_in_status) VALUES
+-- ('R0002', 'Maria', '5511988886666', CURRENT_DATE, '19:00:00', 'Jantar', 3, 2, 'Confirmada', '22:00:00', FALSE);
 
-UPDATE tables SET status = 'Reservada', current_reservation_id = 2 WHERE id = 3;
+-- UPDATE tables SET status = 'Reservada', current_reservation_id = 2 WHERE id = 3;
 
--- Reserva 3: Ocupada (Mesa 5, 18:30 - 21:30)
-INSERT INTO reservations (reservation_code, customer_name, customer_phone, reservation_date, reservation_time, period, table_number, party_size, status, window_end, check_in_status, check_in_time) VALUES
-('R0003', 'Ana', '5511988885555', CURRENT_DATE, '18:30:00', 'Jantar', 5, 4, 'Check-in', '21:30:00', TRUE, CURRENT_TIMESTAMP);
+-- -- Reserva 3: Ocupada (Mesa 5, 18:30 - 21:30)
+-- INSERT INTO reservations (reservation_code, customer_name, customer_phone, reservation_date, reservation_time, period, table_number, party_size, status, window_end, check_in_status, check_in_time) VALUES
+-- ('R0003', 'Ana', '5511988885555', CURRENT_DATE, '18:30:00', 'Jantar', 5, 4, 'Check-in', '21:30:00', TRUE, CURRENT_TIMESTAMP);
 
-UPDATE tables SET status = 'Ocupada', current_reservation_id = 3 WHERE id = 5;
+-- UPDATE tables SET status = 'Ocupada', current_reservation_id = 3 WHERE id = 5;
 
--- Reserva 4: Reservada (Mesa 7, 20:30 - 23:30)
-INSERT INTO reservations (reservation_code, customer_name, customer_phone, reservation_date, reservation_time, period, table_number, party_size, status, window_end, check_in_status) VALUES
-('R0004', 'Carlos', '5511988884444', CURRENT_DATE, '20:30:00', 'Jantar', 7, 4, 'Confirmada', '23:30:00', FALSE);
+-- -- Reserva 4: Reservada (Mesa 7, 20:30 - 23:30)
+-- INSERT INTO reservations (reservation_code, customer_name, customer_phone, reservation_date, reservation_time, period, table_number, party_size, status, window_end, check_in_status) VALUES
+-- ('R0004', 'Carlos', '5511988884444', CURRENT_DATE, '20:30:00', 'Jantar', 7, 4, 'Confirmada', '23:30:00', FALSE);
 
-UPDATE tables SET status = 'Reservada', current_reservation_id = 4 WHERE id = 7;
+-- UPDATE tables SET status = 'Reservada', current_reservation_id = 4 WHERE id = 7;
 
--- Reserva 5: Reservada (Mesa 9, 19:30 - 22:30)
-INSERT INTO reservations (reservation_code, customer_name, customer_phone, reservation_date, reservation_time, period, table_number, party_size, status, window_end, check_in_status) VALUES
-('R0005', 'Paula', '5511988883333', CURRENT_DATE, '19:30:00', 'Jantar', 9, 3, 'Confirmada', '22:30:00', FALSE);
+-- -- Reserva 5: Reservada (Mesa 9, 19:30 - 22:30)
+-- INSERT INTO reservations (reservation_code, customer_name, customer_phone, reservation_date, reservation_time, period, table_number, party_size, status, window_end, check_in_status) VALUES
+-- ('R0005', 'Paula', '5511988883333', CURRENT_DATE, '19:30:00', 'Jantar', 9, 3, 'Confirmada', '22:30:00', FALSE);
 
-UPDATE tables SET status = 'Reservada', current_reservation_id = 5 WHERE id = 9;
+-- UPDATE tables SET status = 'Reservada', current_reservation_id = 5 WHERE id = 9;
 
--- Reserva 6: Ocupada (Mesa 10, 19:00 - 22:00)
-INSERT INTO reservations (reservation_code, customer_name, customer_phone, reservation_date, reservation_time, period, table_number, party_size, status, window_end, check_in_status, check_in_time) VALUES
-('R0006', 'Marcos', '5511988882222', CURRENT_DATE, '19:00:00', 'Jantar', 10, 4, 'Check-in', '22:00:00', TRUE, CURRENT_TIMESTAMP);
+-- -- Reserva 6: Ocupada (Mesa 10, 19:00 - 22:00)
+-- INSERT INTO reservations (reservation_code, customer_name, customer_phone, reservation_date, reservation_time, period, table_number, party_size, status, window_end, check_in_status, check_in_time) VALUES
+-- ('R0006', 'Marcos', '5511988882222', CURRENT_DATE, '19:00:00', 'Jantar', 10, 4, 'Check-in', '22:00:00', TRUE, CURRENT_TIMESTAMP);
 
-UPDATE tables SET status = 'Ocupada', current_reservation_id = 6 WHERE id = 10;
+-- UPDATE tables SET status = 'Ocupada', current_reservation_id = 6 WHERE id = 10;
 
--- Reserva 7: Reservada (Mesa 12, 21:00 - 00:00)
-INSERT INTO reservations (reservation_code, customer_name, customer_phone, reservation_date, reservation_time, period, table_number, party_size, status, window_end, check_in_status) VALUES
-('R0007', 'Lucia', '5511988881111', CURRENT_DATE, '21:00:00', 'Jantar', 12, 2, 'Confirmada', '00:00:00', FALSE);
+-- -- Reserva 7: Reservada (Mesa 12, 21:00 - 00:00)
+-- INSERT INTO reservations (reservation_code, customer_name, customer_phone, reservation_date, reservation_time, period, table_number, party_size, status, window_end, check_in_status) VALUES
+-- ('R0007', 'Lucia', '5511988881111', CURRENT_DATE, '21:00:00', 'Jantar', 12, 2, 'Confirmada', '00:00:00', FALSE);
 
-UPDATE tables SET status = 'Reservada', current_reservation_id = 7 WHERE id = 12;
+-- UPDATE tables SET status = 'Reservada', current_reservation_id = 7 WHERE id = 12;
 
 -- Mesas Livres: 1, 4, 6, 8, 11, 13 (6 mesas)
 -- Mesas Ocupadas (Check-in): 2, 5, 10 (3 mesas)
