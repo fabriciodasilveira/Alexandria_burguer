@@ -10,10 +10,14 @@ CREATE TABLE tables (
 );
 
 -- Inicialização das 13 Mesas (Conforme especificação)
-INSERT INTO tables (id, capacity, location_zone, priority_order) VALUES
-(1, 4, 'Varanda', 1), (2, 4, 'Varanda', 2), (3, 4, 'Varanda', 3), (4, 4, 'Varanda', 4),
-(5, 4, 'Interno', 5), (6, 4, 'Interno', 6), (7, 4, 'Interno', 7), (8, 4, 'Interno', 8),
-(9, 4, 'Jardim', 9), (10, 4, 'Jardim', 10), (11, 4, 'Jardim', 11), (12, 4, 'Jardim', 12),
+INSERT INTO tables (id, capacity, location_zone, priority_order) 
+VALUES
+(1, 4, 'Área Kids', 1), (2, 4, 'Área Kids', 2), 
+(3, 4, 'Área Kids', 3), (4, 4, 'Área Kids', 4),
+(5, 4, 'Área Kids', 5), (6, 4, 'Área Kids', 6),
+(7, 4, 'Normal', 7), (8, 4, 'Normal', 8),
+(9, 4, 'Jardim', 9), (10, 4, 'Jardim', 10),
+(11, 4, 'Jardim', 11), (12, 4, 'Jardim', 12),
 (13, 4, 'Jardim', 13)
 ON CONFLICT (id) DO NOTHING;
 
@@ -54,10 +58,10 @@ BEFORE UPDATE ON reservations
 FOR EACH ROW
 EXECUTE PROCEDURE update_updated_at_column();
 
-CREATE TRIGGER update_tables_updated_at
-BEFORE UPDATE ON tables
-FOR EACH ROW
-EXECUTE PROCEDURE update_updated_at_column();
+-- CREATE TRIGGER update_tables_updated_at
+-- BEFORE UPDATE ON tables
+-- FOR EACH ROW
+-- EXECUTE PROCEDURE update_updated_at_column();
 
 -- Inserindo algumas reservas de exemplo para teste
 -- Reserva 1: Ocupada (Mesa 2, 19:00 - 22:00)

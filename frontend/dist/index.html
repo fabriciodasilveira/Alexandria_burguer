@@ -23,8 +23,29 @@
         .status-tag.Reservada { background-color: #FFC107; color: #333; }
         .table-info p { margin: 5px 0; font-size: 0.9em; color: #555; }
         .table-info .alert { color: #D32F2F; font-weight: bold; }
+        /* O estilo .group-separator não é mais usado, mas pode ser mantido ou removido */
         .group-separator { grid-column: 1 / -1; margin-top: 20px; border-bottom: 2px solid #ccc; padding-bottom: 10px; font-size: 1.2em; font-weight: bold; color: #666; }
         .loading { text-align: center; padding: 50px; font-size: 1.2em; color: #888; }
+        .table-actions {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .action-icon {
+            cursor: pointer;
+            font-size: 1.2em;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .action-icon:hover {
+            opacity: 1;
+        }
+        .action-icon.cancel:hover {
+            filter: brightness(0.8) sepia(1) hue-rotate(-50deg) saturate(5); /* Efeito vermelho no hover */
+        }
     </style>
 </head>
 <body>
@@ -35,8 +56,7 @@
     </div>
 
     <div class="stats-summary" id="stats-summary">
-        <!-- Resumo de estatísticas será inserido aqui -->
-    </div>
+        </div>
 
     <div class="table-grid" id="table-grid">
         <div class="loading">Carregando status das mesas...</div>
@@ -84,17 +104,11 @@
                 let reservadaCount = 0;
 
                 // 4. Renderizar o Dashboard
-                let currentGroup = '';
                 
                 tables.forEach((table, index) => {
-                    const groupName = getGroupName(table.id);
-                    if (groupName !== currentGroup) {
-                        currentGroup = groupName;
-                        const separator = document.createElement('div');
-                        separator.className = 'group-separator';
-                        separator.textContent = groupName;
-                        tableGrid.appendChild(separator);
-                    }
+                    // --- INÍCIO DA MODIFICAÇÃO ---
+                    // A lógica de grupo foi removida daqui
+                    // --- FIM DA MODIFICAÇÃO ---
 
                     const reservation = reservationsMap[table.id];
                     
@@ -140,8 +154,7 @@
                             ${infoContent}
                             <p>Zona: ${table.location_zone}</p>
                         </div>
-                        <!-- Ações Rápidas (Check-in, Cancelar) seriam implementadas aqui -->
-                    `;
+                        `;
                     tableGrid.appendChild(card);
                 });
                 
@@ -156,15 +169,6 @@
                 tableGrid.innerHTML = `<div class="loading" style="color: red;">Erro ao carregar o dashboard: ${error.message}</div>`;
                 console.error(error);
             }
-        }
-        
-        // Função auxiliar para agrupar as mesas (conforme o layout da especificação)
-        function getGroupName(id) {
-            if (id >= 1 && id <= 4) return 'GRUPO A (Mesas 1-4)';
-            if (id >= 5 && id <= 8) return 'GRUPO B (Mesas 5-8)';
-            if (id >= 9 && id <= 12) return 'GRUPO C (Mesas 9-12)';
-            if (id === 13) return 'GRUPO D (Mesa 13)';
-            return 'Outras Mesas';
         }
 
         // Atualizar o dashboard a cada 10 segundos

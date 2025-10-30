@@ -55,6 +55,8 @@ services:
       N8N_BASIC_AUTH_ACTIVE: false
       N8N_HOST: n8n
     restart: unless-stopped
+    volumes: # <--- ADICIONE ESTAS DUAS LINHAS
+      - n8n_data:/home/node/.n8n
     
   waha:
     image: devlikeapro/waha:latest
@@ -62,6 +64,7 @@ services:
     environment:
       WHATSAPP_DEFAULT_ENGINE: NOWEB
       WAHA_API_KEY: "123456"
+      WHATSAPP_HOOK_URL: "http://n8n:5678/webhook/webhook"
       WHATSAPP_HOOK_EVENTS: message
       WAHA_NO_API_KEY: true
       WAHA_DASHBOARD_NO_PASSWORD: true
@@ -85,18 +88,19 @@ services:
       database:
         condition: service_healthy
 
-  llm:
-    image: ollama/ollama:latest
-    container_name: llm_processor
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    restart: unless-stopped
+  # llm:
+  #   image: ollama/ollama:latest
+  #   container_name: llm_processor
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   restart: unless-stopped
 
 # VOLUMES DEVEM FICAR NO FINAL DO ARQUIVO (fora de services)
 volumes:
   postgres_data:
-  ollama_data:
+  # ollama_data:
   waha_sessions:
   waha_media:
+  n8n_data:
