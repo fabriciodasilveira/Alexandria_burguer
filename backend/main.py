@@ -11,13 +11,12 @@ from fastapi.middleware.cors import CORSMiddleware
 # --- Configuração do Banco de Dados ---
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///test_reservas.db")
 
-# Lógica condicional para argumentos de conexão
+# Lógica condicional para argumentos de conexão (Correção SQLite vs Postgres)
 connect_args = {}
 if DATABASE_URL.startswith("sqlite"):
     connect_args = {"check_same_thread": False}
 
 engine = create_engine(DATABASE_URL, connect_args=connect_args)
-
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -61,7 +60,7 @@ class TableBase(BaseModel):
     priority_order: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True # Atualizado de orm_mode
 
 class ReservationBase(BaseModel):
     customer_name: str
@@ -71,7 +70,7 @@ class ReservationBase(BaseModel):
     party_size: int
 
 class ReservationCreate(ReservationBase):
-    pass
+    table_number: int | None = None # <-- MODIFICAÇÃO: Permite ao frontend sugerir uma mesa
 
 class ReservationResponse(ReservationBase):
     id: int
@@ -83,7 +82,7 @@ class ReservationResponse(ReservationBase):
     check_in_status: bool
     
     class Config:
-        orm_mode = True
+        from_attributes = True # Atualizado de orm_mode
 
 # --- Dependência de Sessão ---
 def get_db():
@@ -99,9 +98,6 @@ app = FastAPI(title="Sistema de Automação de Reservas - 13 Mesas")
 # Configuração de CORS para permitir acesso do frontend 
 origins = [
     "*", # Permite qualquer origem (para fins de desenvolvimento/teste )
-    # "http://localhost",
-    # "http://localhost:80",
-    # "http://localhost:8080", # Caso use outra porta para o frontend
 ] 
 
 app.add_middleware(
@@ -160,7 +156,7 @@ def get_todays_reservations(db: SessionLocal = Depends(get_db)):
 def calculate_window_end(reservation_time_str: str) -> str:
     """Calcula o horário de liberação da mesa (reserva + 3 horas)."""
     try:
-        start_time = pendulum.parse(reservation_time_str, exact=True)
+        start_time = pendulum.parse(reservation_time_str) # Removido exact=True
         end_time = start_time.add(hours=3)
         return end_time.format("HH:mm:ss")
     except ValueError:
@@ -169,40 +165,51 @@ def calculate_window_end(reservation_time_str: str) -> str:
 def determine_period(reservation_time_str: str) -> str:
     """Determina se é 'Almoço' (11h-14h) ou 'Jantar' (18h-23h)."""
     try:
-        time_obj = pendulum.parse(reservation_time_str, exact=True)
+        time_obj = pendulum.parse(reservation_time_str) # Removido exact=True
         hour = time_obj.hour
         if 11 <= hour < 14:
             return "Almoço"
         elif 18 <= hour < 23:
             return "Jantar"
         else:
-            raise HTTPException(status_code=400, detail="Horário fora da janela de operação (11h-14h ou 18h-23h).")
+            # Permite horários fora da janela para walk-in, mas classifica como Jantar
+            if hour >= 14:
+                return "Jantar"
+            else:
+                return "Almoço"
+            # raise HTTPException(status_code=400, detail="Horário fora da janela de operação (11h-14h ou 18h-23h).")
     except ValueError:
         raise HTTPException(status_code=400, detail="Formato de hora inválido.")
+
+# --- NOVA FUNÇÃO AUXILIAR ---
+def is_table_free(db: SessionLocal, table_id: int, reservation_date_str: str, reservation_time_str: str) -> bool:
+    """Verifica se uma mesa específica está livre num horário específico."""
+    reservation_date = pendulum.parse(reservation_date_str).date()
+    reservation_start = pendulum.parse(reservation_time_str)
+    reservation_end = reservation_start.add(hours=3)
+
+    # Verifica conflitos de horário para a mesa
+    conflicting_reservations = db.query(Reservation).filter(
+        Reservation.table_number == table_id,
+        Reservation.reservation_date == reservation_date,
+        Reservation.status.in_(['Confirmada', 'Check-in']),
+        (Reservation.reservation_time.cast(String) < reservation_end.format('HH:mm:ss')) & (Reservation.window_end.cast(String) > reservation_start.format('HH:mm:ss'))
+    ).first()
+
+    return not conflicting_reservations
+# --- FIM DA NOVA FUNÇÃO ---
+
 
 def find_available_table(db: SessionLocal, reservation_date_str: str, reservation_time_str: str, party_size: int) -> int | None:
     """
     Encontra a melhor mesa disponível, verificando conflitos de 3 horas.
-    Simplificado: busca a primeira mesa livre que atende a capacidade e não tem conflito.
     """
-    reservation_date = pendulum.parse(reservation_date_str).date()
-    reservation_start = pendulum.parse(reservation_time_str, exact=True)
-    reservation_end = reservation_start.add(hours=3)
-
-    # 1. Busca todas as mesas com capacidade suficiente (simplificado para 4)
+    # 1. Busca todas as mesas com capacidade suficiente
     available_tables = db.query(Table).filter(Table.capacity >= party_size).order_by(Table.priority_order).all()
 
     for table in available_tables:
-        # 2. Verifica conflitos de horário para a mesa
-        conflicting_reservations = db.query(Reservation).filter(
-            Reservation.table_number == table.id,
-            Reservation.reservation_date == reservation_date,
-            Reservation.status.in_(['Confirmada', 'Check-in']),
-            # Conflito: O início da nova reserva está antes do fim da existente E o fim da nova reserva está depois do início da existente
-            (Reservation.reservation_time.cast(String) < reservation_end.format('HH:mm:ss')) & (Reservation.window_end.cast(String) > reservation_start.format('HH:mm:ss'))
-        ).first()
-
-        if not conflicting_reservations:
+        # 2. Verifica conflitos de horário para a mesa específica
+        if is_table_free(db, table.id, reservation_date_str, reservation_time_str):
             return table.id # Mesa encontrada
 
     return None # Nenhuma mesa disponível
@@ -211,16 +218,32 @@ def find_available_table(db: SessionLocal, reservation_date_str: str, reservatio
 def create_reservation(reservation: ReservationCreate, db: SessionLocal = Depends(get_db)):
     """
     Cria uma nova reserva, aplicando a lógica de disponibilidade e janela de 3 horas.
+    Pode receber um 'table_number' específico (para walk-ins) ou encontrar a próxima livre.
     """
     # 1. Validação e Cálculo
     period = determine_period(reservation.reservation_time)
     window_end_time = calculate_window_end(reservation.reservation_time)
     
-    # 2. Encontrar Mesa
-    table_number = find_available_table(db, reservation.reservation_date, reservation.reservation_time, reservation.party_size)
-    
-    if table_number is None:
+    # --- LÓGICA DE ALOCAÇÃO DE MESA MODIFICADA ---
+    table_to_assign: int | None = None
+
+    if reservation.table_number is not None:
+        # Caso 1: O frontend ESPECIFICOU uma mesa (ex: "Ocupar Mesa 5")
+        table_is_available = is_table_free(db, reservation.table_number, reservation.reservation_date, reservation.reservation_time)
+        
+        if table_is_available:
+            table_to_assign = reservation.table_number
+        else:
+            # Se a mesa específica pedida não estiver livre, falha.
+            raise HTTPException(status_code=409, detail=f"A Mesa {reservation.table_number} não está disponível nesse horário.")
+    else:
+        # Caso 2: O frontend NÃO especificou (ex: WhatsApp)
+        # Encontra a melhor mesa disponível automaticamente.
+        table_to_assign = find_available_table(db, reservation.reservation_date, reservation.reservation_time, reservation.party_size)
+
+    if table_to_assign is None:
         raise HTTPException(status_code=409, detail="Nenhuma mesa disponível para este horário e data.")
+    # --- FIM DA MODIFICAÇÃO ---
 
     # 3. Gerar Código de Reserva (Simplificado)
     last_reservation = db.query(Reservation).order_by(Reservation.id.desc()).first()
@@ -235,7 +258,7 @@ def create_reservation(reservation: ReservationCreate, db: SessionLocal = Depend
         reservation_date=pendulum.parse(reservation.reservation_date).date(),
         reservation_time=pendulum.parse(reservation.reservation_time).time(),
         period=period,
-        table_number=table_number,
+        table_number=table_to_assign, # <-- Usa a mesa decidida
         party_size=reservation.party_size,
         window_end=pendulum.parse(window_end_time).time(),
         created_at=pendulum.now(),
@@ -250,7 +273,7 @@ def create_reservation(reservation: ReservationCreate, db: SessionLocal = Depend
     # 6. Atualizar Status da Mesa (Simplificado: Apenas para reservas do dia)
     today = pendulum.now().date()
     if db_reservation.reservation_date == today:
-        db.query(Table).filter(Table.id == table_number).update({
+        db.query(Table).filter(Table.id == table_to_assign).update({
             Table.status: "Reservada",
             Table.current_reservation_id: db_reservation.id
         })

@@ -477,7 +477,6 @@
     </style>
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
         <div class="header-container">
             <div class="header-left">
@@ -502,12 +501,9 @@
         </div>
     </header>
 
-    <!-- Main Content -->
     <div class="container">
-        <!-- Stats Grid -->
         <div class="stats-grid" id="stats-grid"></div>
 
-        <!-- Tables Grid -->
         <div id="content">
             <div class="loading">
                 <svg class="animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -546,6 +542,16 @@
             if (!timeString) return '--:--';
             return timeString.substring(0, 5);
         };
+        
+        // --- FUNÇÕES DE DATA/HORA PARA API (ADICIONADAS) ---
+        const formatDate = (date) => {
+            return date.toISOString().split('T')[0];
+        };
+        const formatTimeSQL = (date) => {
+             return date.toTimeString().split(' ')[0];
+        };
+        // --- FIM FUNÇÕES DE DATA/HORA ---
+
 
         // Show toast notification
         const showToast = (title, description, isError = false) => {
@@ -676,7 +682,7 @@
                         </div>
                     `;
                     actionsHTML = `
-                        <button class="btn-action btn-occupy" onclick="occupyTable(${table.id})" title="Ocupar Mesa">
+                        <button class="btn-action btn-occupy" onclick="window.occupyTable(${table.id})" title="Ocupar Mesa ${table.id}">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                             </svg>
@@ -705,7 +711,7 @@
                         </div>
                     `;
                     actionsHTML = `
-                        <button class="btn-action btn-cancel" onclick="cancelReservation('${reservation.reservation_code}', ${table.id})" title="Cancelar">
+                        <button class="btn-action btn-cancel" onclick="window.cancelReservation('${reservation.reservation_code}', ${table.id})" title="Cancelar">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
@@ -735,13 +741,13 @@
                         </div>` : ''}
                     `;
                     actionsHTML = `
-                        <button class="btn-action btn-checkin" onclick="checkInReservation('${reservation.reservation_code}', ${table.id})" title="Check-in">
+                        <button class="btn-action btn-checkin" onclick="window.checkInReservation('${reservation.reservation_code}', ${table.id})" title="Check-in">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
                             Check-in
                         </button>
-                        <button class="btn-action btn-cancel" onclick="cancelReservation('${reservation.reservation_code}', ${table.id})" title="Cancelar">
+                        <button class="btn-action btn-cancel" onclick="window.cancelReservation('${reservation.reservation_code}', ${table.id})" title="Cancelar">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
@@ -775,40 +781,74 @@
             content.appendChild(tablesGrid);
         };
 
-        // Action handlers
-        const occupyTable = async (tableId) => {
+        // --- INÍCIO DAS FUNÇÕES DE AÇÃO CORRIGIDAS ---
+        
+        // Ocupar mesa (Walk-in)
+        window.occupyTable = async (tableId) => {
+            if (!confirm(`Bloquear mesa ${tableId}"?`)) {
+                return;
+            }
+
+            const now = new Date();
+            const reservationData = {
+                customer_name: "Cliente Walk-in",
+                customer_phone: "000000000", // Campo obrigatório pelo backend
+                reservation_date: formatDate(now),
+                reservation_time: formatTimeSQL(now),
+                party_size: 2, // Padrão de 2 pessoas
+                table_number: tableId // <-- O ID DA MESA ESPECÍFICA
+            };
+
             try {
-                const now = new Date();
-                const response = await fetch(`${API_BASE_URL}/reservations`, {
+                // Etapa 1: Criar a reserva (o backend agora vai alocar a tableId)
+                const createResponse = await fetch(`${API_BASE_URL}/reservations`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        table_number: tableId,
-                        customer_name: 'Walk-in',
-                        party_size: 1,
-                        reservation_date: now.toISOString().split('T')[0],
-                        reservation_time: now.toTimeString().split(' ')[0],
-                        period: now.getHours() < 17 ? 'Almoço' : 'Jantar',
-                        status: 'Ocupada'
-                    })
+                    body: JSON.stringify(reservationData)
                 });
 
-                if (!response.ok) throw new Error('Erro ao ocupar mesa');
-                
-                showToast('Mesa Ocupada', `Mesa ${tableId} foi ocupada com sucesso`);
+                if (!createResponse.ok) {
+                    const errorData = await createResponse.json();
+                    throw new Error(errorData.detail || 'Não foi possível criar a reserva (walk-in).');
+                }
+
+                const newReservation = await createResponse.json();
+                const reservationCode = newReservation.reservation_code;
+
+                showToast('Etapa 1/2', `Reserva ${reservationCode} criada para Mesa ${tableId}. A fazer check-in...`);
+
+                // Etapa 2: Fazer o Check-in
+                const checkInResponse = await fetch(`${API_BASE_URL}/reservations/${reservationCode}/checkin`, {
+                    method: 'POST'
+                });
+
+                if (!checkInResponse.ok) {
+                    const errorData = await checkInResponse.json();
+                    throw new Error(errorData.detail || 'Reserva criada, mas falha ao fazer check-in.');
+                }
+
+                showToast('Sucesso!', `Mesa ${tableId} ocupada com sucesso (Walk-in).`);
                 await fetchDashboardData();
+
             } catch (error) {
                 showToast('Erro', error.message, true);
             }
         };
 
-        const checkInReservation = async (code, tableId) => {
+        // Check-in
+        window.checkInReservation = async (code, tableId) => {
+             if (!confirm(`Confirmar CHECK-IN da reserva ${code} para a Mesa ${tableId}?`)) {
+                return;
+            }
             try {
                 const response = await fetch(`${API_BASE_URL}/reservations/${code}/checkin`, {
                     method: 'POST'
                 });
 
-                if (!response.ok) throw new Error('Erro ao fazer check-in');
+                if (!response.ok) {
+                     const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Erro ao fazer check-in');
+                }
                 
                 showToast('Check-in Realizado', `Mesa ${tableId} - Check-in confirmado`);
                 await fetchDashboardData();
@@ -817,15 +857,19 @@
             }
         };
 
-        const cancelReservation = async (code, tableId) => {
-            if (!confirm(`Deseja realmente cancelar a reserva da Mesa ${tableId}?`)) return;
+        // Cancelar
+        window.cancelReservation = async (code, tableId) => {
+            if (!confirm(`Deseja realmente CANCELAR a reserva ${code} da Mesa ${tableId}?`)) return;
 
             try {
                 const response = await fetch(`${API_BASE_URL}/reservations/${code}/cancel`, {
                     method: 'POST'
                 });
 
-                if (!response.ok) throw new Error('Erro ao cancelar reserva');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Erro ao cancelar reserva');
+                }
                 
                 showToast('Reserva Cancelada', `Mesa ${tableId} - Reserva cancelada`);
                 await fetchDashboardData();
@@ -833,6 +877,7 @@
                 showToast('Erro', error.message, true);
             }
         };
+        // --- FIM DAS FUNÇÕES DE AÇÃO ---
 
         // Event listeners
         document.getElementById('refresh-btn').addEventListener('click', () => {
@@ -844,8 +889,12 @@
         // Initial load
         fetchDashboardData();
 
-        // Auto refresh every 5 seconds
-        setInterval(() => fetchDashboardData(), 5000);
+        // Auto refresh every 30 seconds
+        setInterval(() => {
+            if (!isRefreshing) {
+                fetchDashboardData();
+            }
+        }, 30000);
     </script>
 </body>
 </html>
