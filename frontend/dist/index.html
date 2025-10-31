@@ -247,25 +247,51 @@
         .table-actions {
             display: flex;
             justify-content: flex-end;
+            gap: 0.5rem; /* --- Alterado para espaçar os botões --- */
             padding-top: 0.75rem;
             border-top: 1px solid var(--border);
         }
 
-        .btn-cancel {
+        /* --- Estilo Base dos Botões de Ação --- */
+        .btn-action {
             display: inline-flex;
             align-items: center;
-            gap: 0.25rem;
-            padding: 0.5rem 0.75rem;
+            justify-content: center; /* --- Centraliza o ícone --- */
+            padding: 0.5rem; /* --- Padding uniforme para um botão quadrado --- */
+            width: 2.25rem; /* --- Largura fixa --- */
+            height: 2.25rem; /* --- Altura fixa --- */
             background: transparent;
             border: none;
-            color: var(--occupied);
-            font-size: 0.875rem;
+            font-size: 1.25rem; /* --- Tamanho do ícone --- */
             font-weight: 500;
             cursor: pointer;
             border-radius: calc(var(--radius) - 0.25rem);
             transition: all 0.2s;
         }
+        .btn-action svg {
+             /* --- SVG removido, estamos a usar emojis --- */
+        }
 
+        /* --- Botão Ocupar (Novo) --- */
+        .btn-occupy {
+            color: var(--primary);
+        }
+        .btn-occupy:hover {
+            background: rgba(255, 107, 53, 0.1);
+        }
+
+        /* --- Botão Check-in (Atualizado) --- */
+        .btn-checkin {
+            color: var(--success);
+        }
+        .btn-checkin:hover {
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        /* --- Botão Cancelar (Atualizado) --- */
+        .btn-cancel {
+            color: var(--occupied);
+        }
         .btn-cancel:hover {
             background: rgba(239, 68, 68, 0.1);
         }
@@ -351,7 +377,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <header class="header">
             <h1>Dashboard de Reservas</h1>
             <p id="current-date">HOJE - ...</p>
@@ -363,12 +388,9 @@
             </button>
         </header>
 
-        <!-- Stats Summary -->
         <div class="stats-grid" id="stats-grid">
-            <!-- Stats will be inserted here -->
-        </div>
+            </div>
 
-        <!-- Tables Grid -->
         <div id="content">
             <div class="loading">
                 <svg class="animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -389,6 +411,17 @@
             if (!timeString) return '--:--';
             return timeString.substring(0, 5);
         };
+        
+        // --- NOVAS FUNÇÕES DE DATA/HORA ---
+        // Formata Date para "YYYY-MM-DD"
+        const formatDate = (date) => {
+            return date.toISOString().split('T')[0];
+        };
+        // Formata Date para "HH:MM:SS"
+        const formatTimeSQL = (date) => {
+             return date.toTimeString().split(' ')[0];
+        };
+        // --- FIM DAS NOVAS FUNÇÕES ---
 
         // Show toast notification
         const showToast = (title, description, isError = false) => {
@@ -481,6 +514,8 @@
                 const showAlert = reservation?.period === 'Jantar' && reservation?.reservation_time <= '19:30:00';
 
                 let infoContent = '';
+                let actionsHTML = ''; // <-- Botões de ação vêm aqui
+
                 if (table.status === 'Livre') {
                     infoContent = `
                         <p style="color: var(--text-secondary)">Disponível</p>
@@ -491,6 +526,13 @@
                             <span>Próxima: --:--</span>
                         </div>
                     `;
+                    // --- NOVO BOTÃO DE OCUPAR ---
+                    actionsHTML = `
+                        <button class="btn-action btn-occupy" title="Ocupar Mesa (Walk-in)" onclick="occupyTable()">
+                            ➡️
+                        </button>
+                    `;
+
                 } else if (table.status === 'Ocupada' && reservation) {
                     infoContent = `
                         <div class="info-row">
@@ -512,6 +554,13 @@
                             <span>Até: ${formatTime(reservation.window_end)}</span>
                         </div>
                     `;
+                    // Ação de Cancelar
+                    actionsHTML = `
+                        <button class="btn-action btn-cancel" title="Cancelar Reserva" onclick="cancelReservation('${reservation.reservation_code}', ${table.id})">
+                            ❌
+                        </button>
+                    `;
+
                 } else if (table.status === 'Reservada' && reservation) {
                     infoContent = `
                         <div class="info-row">
@@ -526,10 +575,25 @@
                             </svg>
                             <span>Horário: ${formatTime(reservation.reservation_time)}</span>
                         </div>
-                        <!-- ${showAlert ? '<div class="alert"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg><span>⚠️ até 19:30</span></div>' : ''} -->
+                        ${showAlert ? `
+                        <div class="alert">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
+                            <span>⚠️ até 19:30</span>
+                        </div>` : ''}
+                    `;
+                    // Ações de Check-in e Cancelar
+                    actionsHTML = `
+                        <button class="btn-action btn-checkin" title="Confirmar Check-in" onclick="checkInReservation('${reservation.reservation_code}', ${table.id})">
+                            ✅
+                        </button>
+                        <button class="btn-action btn-cancel" title="Cancelar Reserva" onclick="cancelReservation('${reservation.reservation_code}', ${table.id})">
+                            ❌
+                        </button>
                     `;
                 }
-
+                
                 const card = document.createElement('div');
                 card.className = 'table-card';
                 card.innerHTML = `
@@ -547,16 +611,7 @@
                             <span>Zona: ${table.location_zone}</span>
                         </div>
                     </div>
-                    ${reservation ? `
-                        <div class="table-actions">
-                            <button class="btn-cancel" onclick="cancelReservation('${reservation.reservation_code}', ${table.id})">
-                                <svg style="width: 1rem; height: 1rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                                </svg>
-                                Cancelar
-                            </button>
-                        </div>
-                    ` : ''}
+                    ${actionsHTML ? `<div class="table-actions">${actionsHTML}</div>` : ''}
                 `;
                 tablesGrid.appendChild(card);
             });
@@ -567,7 +622,7 @@
 
         // Cancel reservation
         window.cancelReservation = async (reservationCode, tableId) => {
-            if (!confirm(`Tem a certeza de que quer cancelar a reserva ${reservationCode} da Mesa ${tableId}?`)) {
+            if (!confirm(`Tem a certeza de que quer CANCELAR a reserva ${reservationCode} da Mesa ${tableId}?`)) {
                 return;
             }
 
@@ -589,6 +644,83 @@
             }
         };
 
+        // Check-in reservation
+        window.checkInReservation = async (reservationCode, tableId) => {
+            if (!confirm(`Confirmar CHECK-IN da reserva ${reservationCode} para a Mesa ${tableId}?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/reservations/${reservationCode}/checkin`, {
+                    method: 'POST'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Erro ao fazer check-in');
+                }
+
+                showToast('Sucesso', `Check-in da reserva ${reservationCode} realizado.`);
+                fetchDashboardData(); // Atualiza o dashboard
+
+            } catch (error) {
+                showToast('Erro', error.message || 'Falha ao fazer check-in', true);
+            }
+        };
+
+        // --- NOVA FUNÇÃO DE OCUPAR MESA (WALK-IN) ---
+        window.occupyTable = async () => {
+            if (!confirm(`Ocupar mesa "?`)) {
+                return;
+            }
+
+            const now = new Date();
+            const reservationData = {
+                customer_name: "Cliente Sem Reserva",
+                customer_phone: "000000000",
+                reservation_date: formatDate(now), // Formato YYYY-MM-DD
+                reservation_time: formatTimeSQL(now), // Formato HH:MM:SS
+                party_size: 2 // Ocupação padrão de 2 pessoas
+            };
+
+            try {
+                // 1. Criar a reserva
+                const createResponse = await fetch(`${API_BASE_URL}/reservations`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(reservationData)
+                });
+
+                if (!createResponse.ok) {
+                    const errorData = await createResponse.json();
+                    throw new Error(errorData.detail || 'Não foi possível criar a reserva (walk-in).');
+                }
+
+                const newReservation = await createResponse.json();
+                const reservationCode = newReservation.reservation_code;
+                const tableNumber = newReservation.table_number;
+
+                showToast('Etapa 1/2', `Reserva ${reservationCode} criada para a Mesa ${tableNumber}. A fazer check-in...`);
+
+                // 2. Fazer o Check-in imediatamente
+                const checkInResponse = await fetch(`${API_BASE_URL}/reservations/${reservationCode}/checkin`, {
+                    method: 'POST'
+                });
+
+                if (!checkInResponse.ok) {
+                    const errorData = await checkInResponse.json();
+                    throw new Error(errorData.detail || 'Reserva criada, mas falha ao fazer check-in.');
+                }
+
+                showToast('Sucesso!', `Mesa ${tableNumber} ocupada com sucesso (Walk-in).`);
+                fetchDashboardData(); // Atualiza o dashboard
+
+            } catch (error) {
+                showToast('Erro', error.message || 'Falha ao ocupar a mesa', true);
+            }
+        };
+        // --- FIM DA NOVA FUNÇÃO ---
+
         // Set current date
         document.getElementById('current-date').textContent = 'HOJE - ' + new Date().toLocaleDateString('pt-BR', {
             day: '2-digit',
@@ -603,7 +735,7 @@
 
         // Initial load and auto-refresh
         fetchDashboardData();
-        setInterval(() => fetchDashboardData(), 10000);
+        setInterval(() => fetchDashboardData(), 1000);
     </script>
 </body>
 </html>
