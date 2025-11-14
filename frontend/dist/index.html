@@ -91,8 +91,8 @@
         }
 
         .logo {
-            width: 3rem;
-            height: 3rem;
+            width: 5rem;
+            height: 5rem;
             border-radius: var(--radius);
             object-fit: cover;
             box-shadow: var(--shadow-md);
@@ -515,8 +515,10 @@
     </div>
 
     <script>
-        const API_BASE_URL = `http://${window.location.hostname}:8000`;
-        let isRefreshing = false;
+        
+        const API_BASE_URL = '/api';
+
+        let isRefreshing = false; 
 
         // Update clock
         function updateClock() {
@@ -734,8 +736,8 @@
                         </div>
                         ${showAlert ? `
                         <div class="alert">
-                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width: 44px; height: 44px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
                             </svg>
                             <span>⚠️ Até 19:30</span>
                         </div>` : ''}
@@ -889,12 +891,12 @@
         // Initial load
         fetchDashboardData();
 
-        // Auto refresh every 30 seconds
+        // Auto refresh every 5 seconds
         setInterval(() => {
             if (!isRefreshing) {
                 fetchDashboardData();
             }
-        }, 30000);
+        }, 5000);
     </script>
 </body>
 </html>
