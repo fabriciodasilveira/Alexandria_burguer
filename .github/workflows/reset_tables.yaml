@@ -1,0 +1,23 @@
+name: Reset Diário das Mesas
+
+on:
+  schedule:
+    # Roda todos os dias as 06:00 da manhã (Horário Brasil)
+    # O GitHub usa UTC, então 09:00 UTC = 06:00 BRT
+    - cron: '0 9 * * *'
+  
+  # Permite rodar manualmente clicando num botão na aba "Actions" do GitHub
+  workflow_dispatch:
+
+jobs:
+  reset_tables:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chamar API para limpar mesas
+        run: |
+          # Substitua pela URL do seu backend que está ONLINE
+          # Exemplo: https://api.seurestaurante.com.br/admin/reset_tables
+          
+          curl -X POST SU_URL_AQUI/admin/reset_tables \
+          -H "X-Admin-Token: ${{ secrets.ADMIN_SECRET }}" \
+          -H "Content-Type: application/json"

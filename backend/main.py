@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Header
 from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String, Date, Time, Boolean, TIMESTAMP, text
 from sqlalchemy.orm import sessionmaker, declarative_base
@@ -441,6 +441,32 @@ def simulate_1930_check(db: SessionLocal = Depends(get_db)):
     db.commit()
     
     return {"status": "Simulação de verificação concluída", "results": results}
+
+
+@app.post("/admin/reset_tables", summary="Resetar todas as mesas (Manutenção Diária)")
+def reset_all_tables(
+    x_token: str = Header(..., alias="X-Admin-Token"), 
+    db: SessionLocal = Depends(get_db)
+):
+    """
+    Força o status de todas as mesas para 'Livre' e remove vínculos de reserva.
+    Deve ser executado via Job agendado (ex: GitHub Actions) toda manhã.
+    """
+    # Verifica um token de segurança (defina ADMIN_SECRET no seu .env ou docker-compose)
+    secret_token = os.getenv("ADMIN_SECRET", "senha_super_secreta_padrao")
+    
+    if x_token != secret_token:
+        raise HTTPException(status_code=401, detail="Token de administração inválido")
+
+    # Atualiza todas as mesas
+    db.query(Table).update({
+        Table.status: "Livre",
+        Table.current_reservation_id: None
+    })
+    
+    db.commit()
+    
+    return {"message": "Manutenção executada: Todas as mesas foram resetadas para 'Livre'."}
 
 # --- Endpoint de Teste ---
 @app.get("/")

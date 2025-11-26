@@ -29,6 +29,7 @@ services:
       DATABASE_URL: postgresql://user:password@database:5432/restaurante_13mesas
       MAX_TABLES: 13
       TABLE_CAPACITY: 4
+      ADMIN_SECRET: "minha_senha_secreta_123"
     ports:
       - "8000:8000"
     depends_on:
