@@ -31,7 +31,7 @@ services:
       TABLE_CAPACITY: 4
       ADMIN_SECRET: "minha_senha_secreta_123"
     ports:
-      - "8002:8081"
+      - "8002:8000"
     depends_on:
       - database
     restart: unless-stopped
