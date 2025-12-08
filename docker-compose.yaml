@@ -42,7 +42,7 @@ services:
       dockerfile: Dockerfile
     container_name: frontend_web
     ports:
-      - "8081:80"
+      - "8081:8081"
     depends_on:
       - backend
     restart: unless-stopped
