@@ -18,6 +18,6 @@ jobs:
           # Substitua pela URL do seu backend que está ONLINE
           # Exemplo: https://api.seurestaurante.com.br/admin/reset_tables
           
-          curl -X POST https://passenger-formal-precise-finder.trycloudflare.com/admin/reset_tables \
+          curl -X POST https://backend.fightclube.com.br/admin/reset_tables \
           -H "X-Admin-Token: ${{ secrets.ADMIN_SECRET }}" \
           -H "Content-Type: application/json"
