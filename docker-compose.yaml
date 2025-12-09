@@ -57,7 +57,7 @@ services:
       N8N_HOST: n8n
       N8N_SECURE_COOKIE: "false"
     restart: unless-stopped
-    volumes: # <--- ADICIONE ESTAS DUAS LINHAS
+    volumes:
       - n8n_data:/home/node/.n8n
     
   waha:
@@ -90,19 +90,32 @@ services:
       database:
         condition: service_healthy
 
-  # llm:
-  #   image: ollama/ollama:latest
-  #   container_name: llm_processor
-  #   ports:
-  #     - "11434:11434"
-  #   volumes:
-  #     - ollama_data:/root/.ollama
-  #   restart: unless-stopped
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest-cpu
+    container_name: whisper_asr
+    environment:
+      ASR_MODEL: "base"  # Modelo Whisper base (balance entre velocidade e precisão)
+      ASR_ENGINE: "openai_whisper"
+      ASR_LANGUAGE: "pt"  # Idioma padrão português
+      ASR_TASK: "transcribe"
+      ASR_DEVICE: "cpu"  # Usa CPU, troque para "cuda" se tiver GPU NVIDIA
+    ports:
+      - "9000:9000"
+    volumes:
+      - whisper_models:/root/.cache/whisper  # Cache dos modelos baixados
+      - ./audio_files:/audio  # Pasta para áudios a serem processados
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 # VOLUMES DEVEM FICAR NO FINAL DO ARQUIVO (fora de services)
 volumes:
   postgres_data:
-  # ollama_data:
   waha_sessions:
   waha_media:
   n8n_data:
+  whisper_models:
