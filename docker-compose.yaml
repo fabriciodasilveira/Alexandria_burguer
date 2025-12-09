@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   database:
     image: postgres:13-alpine
@@ -32,12 +30,10 @@ services:
       MAX_TABLES: 13
       TABLE_CAPACITY: 4
       ADMIN_SECRET: "minha_senha_secreta_123"
-      STT_URL: "http://stt_whisper:80/transcribe"
     ports:
       - "8002:8000"
     depends_on:
       - database
-      - stt_whisper
     restart: unless-stopped
 
   frontend:
@@ -63,7 +59,7 @@ services:
     restart: unless-stopped
     volumes:
       - n8n_data:/home/node/.n8n
-
+    
   waha:
     image: devlikeapro/waha:latest
     platform: linux/amd64
@@ -75,10 +71,13 @@ services:
       WAHA_NO_API_KEY: true
       WAHA_DASHBOARD_NO_PASSWORD: true
       WHATSAPP_SWAGGER_NO_PASSWORD: true
+      # Configurações críticas para timeout:
       WHATSAPP_STARTUP_TIMEOUT: 60000
       WHATSAPP_SESSION_TIMEOUT: 120
       WHATSAPP_RECONNECT_INTERVAL: 30
+      # Configurações do Puppeteer:
       PUPPETEER_LAUNCH_ARGS: "--no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-accelerated-2d-canvas --no-first-run --no-zygote --disable-gpu"
+      # Configurações adicionais:
       WHATSAPP_WEBJS_QR_MAX_RETRIES: 5
       WHATSAPP_WEBJS_RESTART_ON_TIMEOUT: "true"
     volumes:
@@ -91,7 +90,7 @@ services:
       database:
         condition: service_healthy
 
-# VOLUMES
+# VOLUMES DEVEM FICAR NO FINAL DO ARQUIVO (fora de services)
 volumes:
   postgres_data:
   waha_sessions:
