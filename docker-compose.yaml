@@ -91,25 +91,21 @@ services:
         condition: service_healthy
 
   whisper:
-    image: opea/whisper
-    container_name: whisper_asr
+    image: lscr.io/linuxserver/faster-whisper:latest
+    container_name: faster-whisper
     environment:
-      ASR_MODEL: "base"  # Modelo Whisper base (balance entre velocidade e precisão)
-      ASR_ENGINE: "openai_whisper"
-      ASR_LANGUAGE: "pt"  # Idioma padrão português
-      ASR_TASK: "transcribe"
-    ports:
-      - "9000:9000"
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - WHISPER_MODEL=tiny-int8
+      - LOCAL_ONLY= #optional
+      - WHISPER_BEAM=1 #optional
+      - WHISPER_LANG=en #optional
     volumes:
-      - whisper_models:/root/.cache/whisper  # Cache dos modelos baixados
-      - ./audio_files:/audio  # Pasta para áudios a serem processados
+      - /path/to/faster-whisper/data:/config
+    ports:
+      - 10300:10300
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s  # Dá mais tempo para baixar o modelo
 
 # VOLUMES DEVEM FICAR NO FINAL DO ARQUIVO (fora de services)
 volumes:
