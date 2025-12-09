@@ -100,11 +100,11 @@ services:
     restart: unless-stopped
     environment:
       SERVICE_MODE: http
-      MODEL_TYPE: lin
+      MODEL: large-v3
       ENABLE_STREAMING: "false"
       CONCURRENCY: 1
     ports:
-      - "8005:80"  # API de transcrição
+      - "8005:8005"  # API de transcrição
     volumes:
       - ./models:/opt/MODELS  # coloque seus modelos nesta pasta local
 
