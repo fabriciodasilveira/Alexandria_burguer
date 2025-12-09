@@ -99,7 +99,7 @@ services:
     container_name: stt_whisper
     restart: unless-stopped
     environment:
-      SERVING_MODE: http
+      SERVICE_MODE: http
       MODEL_TYPE: lin
       ENABLE_STREAMING: "false"
       CONCURRENCY: 1
