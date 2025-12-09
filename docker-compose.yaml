@@ -91,7 +91,7 @@ services:
         condition: service_healthy
 
   whisper:
-    image: willh/openai-whisper:latest
+    image: opea/whisper
     container_name: whisper_asr
     environment:
       ASR_MODEL: "base"  # Modelo Whisper base (balance entre velocidade e precisão)
