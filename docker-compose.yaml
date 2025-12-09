@@ -84,7 +84,7 @@ services:
     volumes:
       # - waha_sessions:/app/.sessions
       # - waha_media:/app/.media
-      - waha_data:/app/data 
+      - waha_data:/app/.data 
     ports:
       - "3000:3000"
     restart: unless-stopped
