@@ -91,7 +91,7 @@ services:
         condition: service_healthy
 
   whisper:
-    image: ghcr.io/ahmetoner/whisper-asr-webservice:latest-cpu
+    image: willh/openai-whisper:latest
     container_name: whisper_asr
     environment:
       ASR_MODEL: "base"  # Modelo Whisper base (balance entre velocidade e precisão)
