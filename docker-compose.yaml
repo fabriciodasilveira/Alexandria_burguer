@@ -91,25 +91,6 @@ services:
       database:
         condition: service_healthy
 
-  # -------------------------------
-  # 🟦 SERVIÇO DE TRANSCRIÇÃO WHISPER
-  # -------------------------------
-  stt_whisper:
-    image: lintoai/linto-stt-whisper:latest
-    container_name: stt_whisper
-    restart: unless-stopped
-    environment:
-      SERVICE_MODE: http
-      MODEL: large-v3
-      ENABLE_STREAMING: "false"
-      CONCURRENCY: 1
-      DEVICE: cpu
-      LANGUAGE: pt
-    ports:
-      - "8005:80"  # API de transcrição
-    volumes:
-      - ./models:/opt/MODELS  # coloque seus modelos nesta pasta local
-
 # VOLUMES
 volumes:
   postgres_data:
