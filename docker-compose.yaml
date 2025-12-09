@@ -98,7 +98,6 @@ services:
       ASR_ENGINE: "openai_whisper"
       ASR_LANGUAGE: "pt"  # Idioma padrão português
       ASR_TASK: "transcribe"
-      ASR_DEVICE: "cpu"  # Usa CPU, troque para "cuda" se tiver GPU NVIDIA
     ports:
       - "9000:9000"
     volumes:
@@ -106,11 +105,11 @@ services:
       - ./audio_files:/audio  # Pasta para áudios a serem processados
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/docs"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 60s  # Dá mais tempo para baixar o modelo
 
 # VOLUMES DEVEM FICAR NO FINAL DO ARQUIVO (fora de services)
 volumes:
