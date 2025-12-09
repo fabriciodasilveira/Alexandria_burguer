@@ -106,7 +106,7 @@ services:
       DEVICE: cpu
       LANGUAGE: pt
     ports:
-      - "8005:8005"  # API de transcrição
+      - "8005:80"  # API de transcrição
     volumes:
       - ./models:/opt/MODELS  # coloque seus modelos nesta pasta local
 
