@@ -82,7 +82,7 @@ services:
       WHATSAPP_WEBJS_QR_MAX_RETRIES: 5
       WHATSAPP_WEBJS_RESTART_ON_TIMEOUT: "true"
     volumes:
-      - waha_data:/app/.data 
+      - waha_data:/app/data 
       # - waha_sessions:/app/.sessions
       # - waha_media:/app/.media
       
@@ -106,6 +106,7 @@ services:
 volumes:
   postgres_data:
   # ollama_data:
-  waha_sessions:
-  waha_media:
+  waha_data:
+  # waha_sessions:
+  # waha_media:
   n8n_data:
