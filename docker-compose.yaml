@@ -66,8 +66,6 @@ services:
     environment:
       WHATSAPP_DEFAULT_ENGINE: WEBJS
       WAHA_API_KEY: "123456"
-      HOST: "0.0.0.0"
-      EXTERNAL_HOST: "waha"
       WHATSAPP_HOOK_URL: "http://n8n:5678/webhook/e910146d-3636-4f0b-a575-ed9963cd82d9"
       WHATSAPP_HOOK_EVENTS: message
       WAHA_NO_API_KEY: true
@@ -83,10 +81,8 @@ services:
       WHATSAPP_WEBJS_QR_MAX_RETRIES: 5
       WHATSAPP_WEBJS_RESTART_ON_TIMEOUT: "true"
     volumes:
-      - waha_data:/app/data 
-      # - waha_sessions:/app/.sessions
-      # - waha_media:/app/.media
-      
+      - waha_sessions:/app/.sessions
+      - waha_media:/app/.media
     ports:
       - "3000:3000"
     restart: unless-stopped
@@ -107,7 +103,6 @@ services:
 volumes:
   postgres_data:
   # ollama_data:
-  waha_data:
-  # waha_sessions:
-  # waha_media:
+  waha_sessions:
+  waha_media:
   n8n_data:
