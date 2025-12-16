@@ -70,6 +70,8 @@ services:
       WAHA_DASHBOARD_NO_PASSWORD: true
       WHATSAPP_SWAGGER_NO_PASSWORD: true
 
+      WHATSAPP_HOOK_URL: "http://n8n:5678/webhook/e910146d-3636-4f0b-a575-ed9963cd82d9"
+
       # Timeouts e estabilidade
       WHATSAPP_STARTUP_TIMEOUT: 60000
       WHATSAPP_SESSION_TIMEOUT: 120
