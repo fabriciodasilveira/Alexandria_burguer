@@ -63,29 +63,32 @@ services:
   waha:
     image: devlikeapro/waha:latest
     platform: linux/amd64
+    container_name: alexandria-muriae-waha
     environment:
       WHATSAPP_DEFAULT_ENGINE: WEBJS
-      WAHA_API_KEY: "123456"
-      WHATSAPP_HOOK_URL: "http://n8n:5678/webhook/e910146d-3636-4f0b-a575-ed9963cd82d9"
-      WHATSAPP_HOOK_EVENTS: message
       WAHA_NO_API_KEY: true
       WAHA_DASHBOARD_NO_PASSWORD: true
       WHATSAPP_SWAGGER_NO_PASSWORD: true
-      # Configurações críticas para timeout:
+
+      # Timeouts e estabilidade
       WHATSAPP_STARTUP_TIMEOUT: 60000
       WHATSAPP_SESSION_TIMEOUT: 120
       WHATSAPP_RECONNECT_INTERVAL: 30
-      # Configurações do Puppeteer:
+
+      # Puppeteer
       PUPPETEER_LAUNCH_ARGS: "--no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-accelerated-2d-canvas --no-first-run --no-zygote --disable-gpu"
-      # Configurações adicionais:
+
       WHATSAPP_WEBJS_QR_MAX_RETRIES: 5
       WHATSAPP_WEBJS_RESTART_ON_TIMEOUT: "true"
+
     volumes:
-      - waha_sessions:/app/.sessions
-      - waha_media:/app/.media
+      - waha_data:/data
+
     ports:
       - "3000:3000"
+
     restart: unless-stopped
+
     depends_on:
       database:
         condition: service_healthy
@@ -93,6 +96,5 @@ services:
 # VOLUMES DEVEM FICAR NO FINAL DO ARQUIVO (fora de services)
 volumes:
   postgres_data:
-  waha_sessions:
-  waha_media:
+  waha_data:
   n8n_data:
