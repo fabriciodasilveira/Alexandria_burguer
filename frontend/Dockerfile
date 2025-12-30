@@ -12,5 +12,7 @@ COPY dist /usr/share/nginx/html
 # e substitui a configuração padrão
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+COPY .htpasswd /etc/nginx/.htpasswd
+
 EXPOSE 8081
 CMD ["nginx", "-g", "daemon off;"]
