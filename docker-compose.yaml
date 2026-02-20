@@ -61,7 +61,7 @@ services:
       - n8n_data:/home/node/.n8n
     
   waha:
-    image: devlikeapro/waha:lastest
+    image: devlikeapro/waha
     platform: linux/amd64
     container_name: alexandria-muriae-waha
     environment:
