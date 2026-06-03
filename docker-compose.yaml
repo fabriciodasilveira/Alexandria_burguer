@@ -54,8 +54,13 @@ services:
       - "5678:5678"
     environment:
       N8N_BASIC_AUTH_ACTIVE: false
-      N8N_HOST: n8n
+      N8N_HOST: "n8n.fightclube.com.br"
       N8N_SECURE_COOKIE: "false"
+      N8N_PROTOCOL: "https"
+      N8N_PORT: "5678"
+      WEBHOOK_URL: "https://n8n.fightclube.com.br/"
+      N8N_EDITOR_BASE_URL: "https://n8n.fightclube.com.br"
+      N8N_PROXY_HOPS: "1"
     restart: unless-stopped
     volumes:
       - n8n_data:/home/node/.n8n
